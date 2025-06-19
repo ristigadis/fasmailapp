@@ -1,4 +1,5 @@
 // lib/routes/app_routes.dart
+import 'package:fasmail_fix/screens/mahasiswa/panduan_pengajuan_screen.dart';
 import 'package:flutter/material.dart';
 
 // shared
@@ -12,7 +13,6 @@ import '../screens/mahasiswa/home_mahasiswa_screen.dart';
 import '../screens/mahasiswa/pengajuan_surat_screen.dart';
 import '../screens/mahasiswa/cek_status_surat_screen.dart';
 import '../screens/mahasiswa/cek_keaslian_surat_screen.dart';
-import '../screens/mahasiswa/riwayat_surat_screen.dart';
 import '../screens/mahasiswa/profil_mahasiswa_screen.dart';
 
 // admin
@@ -46,7 +46,7 @@ class AppRoutes {
     pengajuanSurat: (context) => const PengajuanSuratScreen(),
     cekStatusSurat: (context) => const CekStatusSuratScreen(),
     cekKeaslianSurat: (context) => const CekKeaslianSuratScreen(),
-    riwayatSurat: (context) => const RiwayatSuratScreen(),
+    riwayatSurat: (context) => const PanduanPengajuanScreen(),
     profilMahasiswa: (context) => const ProfilMahasiswaScreen(),
 
     loginAdmin: (context) => const LoginAdminScreen(),

@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:path/path.dart' as p;
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PengajuanSuratScreen extends StatefulWidget {
   const PengajuanSuratScreen({super.key});
@@ -51,33 +48,15 @@ class _PengajuanSuratScreenState extends State<PengajuanSuratScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      setState(() {
-        tanggalController.text = picked.toIso8601String().split('T').first;
-      });
-    }
-  }
-
   Future<Position?> _ambilLokasi() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     LocationPermission permission = await Geolocator.checkPermission();
-
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-
     if (!serviceEnabled || permission == LocationPermission.deniedForever) {
       return null;
     }
-
     return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
@@ -99,6 +78,14 @@ class _PengajuanSuratScreenState extends State<PengajuanSuratScreen> {
 
     try {
       final lokasi = await _ambilLokasi();
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Silakan login terlebih dahulu."), backgroundColor: Colors.red),
+        );
+        return;
+      }
 
       await FirebaseFirestore.instance.collection('pengajuan_surat').add({
         'nama': nama,
@@ -109,7 +96,8 @@ class _PengajuanSuratScreenState extends State<PengajuanSuratScreen> {
         'berkas_base64': base64File ?? '',
         'nama_file': fileName ?? '',
         'status': 'menunggu',
-        'createdAt': FieldValue.serverTimestamp(),
+        'uid': currentUser.uid, // penting!
+        'createdAt': FieldValue.serverTimestamp(), // penting!
         'lokasi': lokasi != null
             ? {
                 'lat': lokasi.latitude,
@@ -128,8 +116,8 @@ class _PengajuanSuratScreenState extends State<PengajuanSuratScreen> {
       tanggalController.clear();
       setState(() {
         selectedKategori = null;
-        base64File = null;
         fileName = null;
+        base64File = null;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -140,33 +128,40 @@ class _PengajuanSuratScreenState extends State<PengajuanSuratScreen> {
     }
   }
 
-  Future<Widget> _previewFile() async {
-    if (base64File == null || fileName == null) return const SizedBox();
-
-    Uint8List bytes = base64Decode(base64File!);
-
-    if (fileName!.toLowerCase().endsWith('.pdf')) {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      return SizedBox(
-        height: 300,
-        child: PDFView(filePath: file.path),
-      );
-    } else if (fileName!.toLowerCase().endsWith('.jpg') ||
-        fileName!.toLowerCase().endsWith('.jpeg') ||
-        fileName!.toLowerCase().endsWith('.png')) {
-      return Image.memory(bytes, height: 250);
-    } else {
-      return const Text("Format file tidak didukung.");
-    }
-  }
-
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        tanggalController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
+  Future<Widget> _previewFile() async {
+    if (base64File == null || fileName == null) return const SizedBox.shrink();
+    final ext = p.extension(fileName!).toLowerCase();
+    if (['.jpg', '.jpeg', '.png'].contains(ext)) {
+      try {
+        final bytes = base64Decode(base64File!);
+        return Image.memory(bytes, width: 120, height: 120, fit: BoxFit.cover);
+      } catch (_) {
+        return const Text("Gagal menampilkan gambar.");
+      }
+    } else {
+      return const Icon(Icons.insert_drive_file, size: 60, color: Colors.grey);
+    }
   }
 
   @override

@@ -51,7 +51,6 @@ class SuratMasukScreen extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('pengajuan_surat')
-            .where('status', isEqualTo: 'menunggu') // ⬅️ hanya ambil yang belum diproses
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -60,7 +59,7 @@ class SuratMasukScreen extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Tidak ada surat yang menunggu persetujuan."));
+            return const Center(child: Text("Tidak ada surat yang tersedia."));
           }
 
           final docs = snapshot.data!.docs;

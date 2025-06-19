@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'pengajuan_surat_screen.dart';
 import 'cek_status_surat_screen.dart';
-import 'cek_keaslian_surat_screen.dart';
-import 'riwayat_surat_screen.dart';
+import 'panduan_pengajuan_screen.dart'; // ganti dari faq_pengajuan_screen.dart
 import 'profil_mahasiswa_screen.dart';
-import 'pengumuman_mahasiswa_screen.dart'; // import baru
+import 'pengumuman_mahasiswa_screen.dart';
 
 class HomeMahasiswaScreen extends StatefulWidget {
   const HomeMahasiswaScreen({super.key});
+
   @override
   State<HomeMahasiswaScreen> createState() => _HomeMahasiswaScreenState();
 }
@@ -16,7 +16,7 @@ class _HomeMahasiswaScreenState extends State<HomeMahasiswaScreen> {
   int _selectedIndex = 1;
 
   final List<Widget> _pages = [
-    const RiwayatSuratScreen(),
+    const PanduanPengajuanScreen(), // sudah ganti
     const HomeContent(),
     const ProfilMahasiswaScreen(),
   ];
@@ -36,7 +36,7 @@ class _HomeMahasiswaScreenState extends State<HomeMahasiswaScreen> {
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.white,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Riwayat'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Panduan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
@@ -90,9 +90,9 @@ class HomeContent extends StatelessWidget {
               const SizedBox(height: 12),
               buildHomeButton(
                 context,
-                label: "Cek Keaslian Surat",
-                icon: Icons.assignment_turned_in,
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CekKeaslianSuratScreen())),
+                label: "Panduan Pengajuan",
+                icon: Icons.menu_book,
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PanduanPengajuanScreen())),
               ),
               const SizedBox(height: 24),
               GestureDetector(

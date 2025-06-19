@@ -16,17 +16,11 @@ class _RiwayatSuratScreenState extends State<RiwayatSuratScreen> {
     'Surat Tugas',
   ];
 
-  /// 👇 Stream generator sesuai filter
   Stream<QuerySnapshot<Map<String, dynamic>>> _getSuratStream() {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+    return FirebaseFirestore.instance
         .collection('pengajuan_surat')
-        .where('status', isNotEqualTo: 'menunggu');
-
-    if (selectedKategori != null) {
-      query = query.where('kategori', isEqualTo: selectedKategori);
-    }
-
-    return query.snapshots();
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 
   @override
@@ -76,12 +70,23 @@ class _RiwayatSuratScreenState extends State<RiwayatSuratScreen> {
                   return const Center(child: Text("Tidak ada surat dalam riwayat."));
                 }
 
-                final docs = snapshot.data!.docs;
+                // 🔍 Filter client-side
+                final allDocs = snapshot.data!.docs;
+                final filteredDocs = selectedKategori == null
+                    ? allDocs
+                    : allDocs.where((doc) =>
+                        doc.data()['kategori'] == selectedKategori).toList();
+
+                if (filteredDocs.isEmpty) {
+                  return const Center(child: Text("Tidak ada surat sesuai kategori."));
+                }
 
                 return ListView.builder(
-                  itemCount: docs.length,
+                  itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
-                    final data = docs[index].data();
+                    final data = filteredDocs[index].data();
+                    final status = data['status'] ?? '-';
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       color: const Color(0xFFF45C5C),
@@ -92,7 +97,7 @@ class _RiwayatSuratScreenState extends State<RiwayatSuratScreen> {
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "NIM: ${data['nim'] ?? '-'}\nStatus: ${data['status']}",
+                          "NIM: ${data['nim'] ?? '-'}\nStatus: $status",
                           style: const TextStyle(color: Colors.white70),
                         ),
                         isThreeLine: true,
@@ -101,16 +106,16 @@ class _RiwayatSuratScreenState extends State<RiwayatSuratScreen> {
                           showDialog(
                             context: context,
                             builder: (_) => AlertDialog(
-                              title: Text("Detail Riwayat"),
+                              title: const Text("Detail Riwayat"),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Nama: ${data['nama']}"),
-                                  Text("NIM: ${data['nim']}"),
-                                  Text("Kategori: ${data['kategori']}"),
-                                  Text("Tujuan: ${data['tujuan']}"),
-                                  Text("Status: ${data['status']}"),
+                                  Text("Nama: ${data['nama'] ?? '-'}"),
+                                  Text("NIM: ${data['nim'] ?? '-'}"),
+                                  Text("Kategori: ${data['kategori'] ?? '-'}"),
+                                  Text("Tujuan: ${data['tujuan'] ?? '-'}"),
+                                  Text("Status: $status"),
                                 ],
                               ),
                               actions: [
